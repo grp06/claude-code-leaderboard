@@ -4,14 +4,16 @@ import { loadConfig, saveConfig, checkAuthStatus } from '../utils/config.js';
 import { startOAuth1aFlow } from '../auth/oauth1a.js';
 import { storeOAuth1aTokens } from '../auth/tokens.js';
 
-export async function authCommand() {
+export async function authCommand(options = {}) {
+  const { force = false } = options;
+  
   console.log(chalk.blue('🔐 Twitter Authentication'));
   console.log(chalk.gray('━'.repeat(30)));
   
   // Check if already authenticated
   const authStatus = await checkAuthStatus();
   
-  if (authStatus.isAuthenticated) {
+  if (authStatus.isAuthenticated && !force) {
     console.log(chalk.green('✅ Already authenticated as'), chalk.cyan(authStatus.twitterHandle));
     console.log(chalk.gray(`Last authenticated: ${authStatus.lastAuthenticated}`));
     
@@ -26,8 +28,12 @@ export async function authCommand() {
     
     if (!reauth) {
       console.log(chalk.yellow('Authentication cancelled'));
+      console.log(chalk.gray('Use --force flag to skip this prompt'));
       return;
     }
+  } else if (force && authStatus.isAuthenticated) {
+    console.log(chalk.yellow('🔄 Force re-authentication requested'));
+    console.log(chalk.gray('Current authentication will be replaced'));
   }
   
   console.log();

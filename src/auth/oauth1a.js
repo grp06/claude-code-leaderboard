@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { apiFetch } from '../utils/api.js';
 import { scanAllHistoricalUsage } from '../utils/usage-scanner.js';
 import ora from 'ora';
+import { getDeviceMetadata } from '../utils/device.js';
 
 const REDIRECT_URI = 'http://localhost:7632/callback';
 
@@ -62,17 +63,36 @@ export async function startOAuth1aFlow() {
         // Verify with backend
         console.log(chalk.blue('🔐 Verifying with backend...'));
         
+        // Get device metadata
+        const deviceMetadata = await getDeviceMetadata();
+        
         const verifyResponse = await apiFetch('/api/auth/oauth/verify', {
           method: 'POST',
           body: JSON.stringify({
             oauth_token,
-            oauth_verifier
+            oauth_verifier,
+            device: deviceMetadata
           })
         });
         
         if (!verifyResponse.ok) {
-          const error = await verifyResponse.text();
-          throw new Error(`Verification failed: ${error}`);
+          const errorText = await verifyResponse.text();
+          let errorMessage = 'Verification failed';
+          
+          // Parse specific error types
+          if (errorText.includes('invalid_token')) {
+            errorMessage = 'Invalid OAuth token. Please try authenticating again.';
+          } else if (errorText.includes('expired')) {
+            errorMessage = 'OAuth token expired. Please authenticate again.';
+          } else if (errorText.includes('rate_limit')) {
+            errorMessage = 'Rate limit exceeded. Please wait a few minutes and try again.';
+          } else if (errorText.includes('already_authenticated')) {
+            errorMessage = 'This device is already authenticated to a different account.';
+          } else {
+            errorMessage = `Verification failed: ${errorText}`;
+          }
+          
+          throw new Error(errorMessage);
         }
         
         const authData = await verifyResponse.json();
@@ -129,11 +149,13 @@ export async function startOAuth1aFlow() {
                     const syncSpinner = ora('Uploading historical data... Just a moment! Youll see your spot on the leaderboard soon!').start();
                     
                     // Send historical data to API
+                    const deviceMetadata = await getDeviceMetadata();
                     const syncResponse = await apiFetch('/api/usage/sync-history', {
                       method: 'POST',
                       body: JSON.stringify({
                         twitter_user_id: authData.user.twitter_user_id,
-                        usage_entries: entries
+                        usage_entries: entries,
+                        device: deviceMetadata
                       })
                     });
                     
@@ -160,7 +182,7 @@ export async function startOAuth1aFlow() {
               } else {
                 // If check fails, still don't scan immediately - just log error
                 console.error(chalk.red('Unable to verify sync status with server'));
-                console.log(chalk.yellow('Historical sync skipped. You can run "npx claude-code-leaderboard stats" later to sync your data.'));
+                console.log(chalk.yellow('Historical sync skipped. You can run "claudecount stats" later to sync your data.'));
               }
             } catch (error) {
               console.error(chalk.red('Error during historical sync:', error.message));

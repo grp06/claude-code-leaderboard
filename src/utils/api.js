@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import { getValidAccessToken } from '../auth/tokens.js';
 import { loadConfig } from './config.js';
 import { API_BASE_URL } from './constants.js';
+import { getDeviceId } from './device.js';
 
 /**
  * Make an authenticated API request
@@ -17,6 +18,9 @@ export async function authenticatedFetch(path, options = {}) {
   // Get valid tokens
   const tokens = await getValidAccessToken();
   
+  // Get device ID
+  const deviceId = await getDeviceId();
+  
   // Build full URL
   const url = `${endpoint}${path}`;
   
@@ -25,7 +29,8 @@ export async function authenticatedFetch(path, options = {}) {
     ...options.headers,
     'Content-Type': 'application/json',
     'X-OAuth-Token': tokens.oauth_token,
-    'X-OAuth-Token-Secret': tokens.oauth_token_secret
+    'X-OAuth-Token-Secret': tokens.oauth_token_secret,
+    'X-Device-ID': deviceId
   };
   
   // Make the request
