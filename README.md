@@ -76,6 +76,16 @@ The `count_tokens.js` script:
 ```bash
 # Setup or re-authenticate
 npx claude-code-leaderboard
+npx claude-code-leaderboard auth
+npx claude-code-leaderboard auth --force  # Force re-authentication
+
+# View stats and sync data
+npx claude-code-leaderboard stats
+npx claude-code-leaderboard stats --resync  # Force resync historical data
+npx claude-code-leaderboard stats --details  # Show detailed token breakdown
+
+# Check sync status
+npx claude-code-leaderboard sync-status
 
 # Reset/uninstall (with optional account deletion)
 npx claude-code-leaderboard reset
@@ -157,6 +167,47 @@ npm install
 node bin/cli.js --help
 ```
 
+## Troubleshooting
+
+### Common Issues
+
+#### "Failed to sync historical data"
+If you see this error during authentication:
+1. Run `npx claude-code-leaderboard stats` to manually sync your data
+2. Use `npx claude-code-leaderboard stats --resync` to force a complete resync
+3. Check your internet connection and try again
+
+#### "Invalid OAuth link" on second device
+When authenticating from multiple devices:
+1. Use `npx claude-code-leaderboard auth --force` to force re-authentication
+2. Each device maintains its own authentication tokens
+3. All devices will contribute to your total usage count
+
+#### Authentication issues
+If you're having trouble authenticating:
+1. Make sure pop-ups are enabled in your browser
+2. Try running `npx claude-code-leaderboard reset` and starting fresh
+3. Use the `--force` flag with auth to skip confirmation prompts
+
+#### Data not syncing
+If your usage data isn't appearing on the leaderboard:
+1. Run `npx claude-code-leaderboard sync-status` to check your sync state
+2. Use `npx claude-code-leaderboard stats` to manually trigger a sync
+3. Ensure you have used Claude Code at least once before syncing
+
+#### Multi-device usage
+To use Claude Count across multiple devices:
+1. Authenticate on each device separately
+2. Each device will have a unique device ID
+3. All usage will be aggregated under your Twitter account
+4. Use `npx claude-code-leaderboard stats` on any device to see total usage
+
+### Debug Mode
+For detailed logging, set the environment variable:
+```bash
+CLAUDE_COUNT_DEBUG=1 npx claude-code-leaderboard stats
+```
+
 ## Support
 
 For issues or questions:
@@ -164,6 +215,7 @@ For issues or questions:
 - Verify your Twitter authentication
 - Ensure Node.js 16+ is installed
 - Check network connectivity
+- Review the troubleshooting section above
 
 ## Contributing
 

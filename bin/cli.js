@@ -9,6 +9,7 @@ import { dirname } from 'path';
 
 import { authCommand } from '../src/commands/auth.js';
 import { resetCommand } from '../src/commands/reset.js';
+import { statsCommand, syncStatusCommand } from '../src/commands/stats.js';
 import { checkAuthStatus } from '../src/utils/config.js';
 import { ensureHookInstalled } from '../src/utils/hook-installer.js';
 
@@ -55,7 +56,48 @@ program
     }
   });
 
+// Auth command
+program
+  .command('auth')
+  .description('Authenticate with Twitter')
+  .option('-f, --force', 'Force re-authentication without prompting')
+  .action(async (options) => {
+    try {
+      await authCommand(options);
+    } catch (error) {
+      console.error(chalk.red('❌ Error:'), error.message);
+      process.exit(1);
+    }
+  });
 
+// Stats command
+program
+  .command('stats')
+  .description('View your usage stats and sync with the leaderboard')
+  .option('-r, --resync', 'Force resync of historical data')
+  .option('-d, --details', 'Show detailed token breakdown')
+  .option('--skip-open', 'Don\'t open browser after showing stats')
+  .action(async (options) => {
+    try {
+      await statsCommand(options);
+    } catch (error) {
+      console.error(chalk.red('❌ Error:'), error.message);
+      process.exit(1);
+    }
+  });
+
+// Sync status command
+program
+  .command('sync-status')
+  .description('Check sync status without triggering a sync')
+  .action(async () => {
+    try {
+      await syncStatusCommand();
+    } catch (error) {
+      console.error(chalk.red('❌ Error:'), error.message);
+      process.exit(1);
+    }
+  });
 
 // Reset command
 program
